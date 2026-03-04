@@ -1,0 +1,25 @@
+.quota-hero {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.quota-progress-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.quota-side-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.quota-progress-wrap {
+  width: min(220px, 100%);
+  margin: 0 auto;
+}
+
+.progress-shell--single {
+  grid-template-columns: 1fr;
+}

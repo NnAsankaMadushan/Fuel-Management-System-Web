@@ -1,0 +1,137 @@
+.fuel-chart-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.35rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.fuel-chart-card--compact {
+  padding: 1rem;
+}
+
+.fuel-chart-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.fuel-chart-copy h3 {
+  font-size: 1.2rem;
+}
+
+.fuel-chart-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.fuel-ring-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.fuel-ring-card--petrol {
+  --fuel-ring-color: #f97316;
+  --fuel-ring-track: #e8ddd0;
+  box-shadow: inset 0 1px 0 rgba(249, 115, 22, 0.08);
+}
+
+.fuel-ring-card--diesel {
+  --fuel-ring-color: #0d9488;
+  --fuel-ring-track: #d3e8e4;
+  box-shadow: inset 0 1px 0 rgba(13, 148, 136, 0.08);
+}
+
+.fuel-ring-wrap {
+  width: min(180px, 100%);
+  margin: 0 auto;
+}
+
+.fuel-chart-card--compact .fuel-ring-wrap {
+  width: min(150px, 100%);
+}
+
+.fuel-ring-meter {
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 14px solid var(--fuel-ring-track);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.fuel-ring-value-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.fuel-ring-value {
+  color: var(--fuel-ring-color);
+  font-size: clamp(2rem, 4vw, 2.4rem);
+  font-weight: 500;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  line-height: 1;
+}
+
+.fuel-ring-unit {
+  color: var(--fuel-ring-color);
+  font-size: clamp(0.78rem, 1.5vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fuel-ring-copy {
+  display: grid;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.fuel-ring-copy strong,
+.fuel-chart-total strong {
+  font-size: 1.4rem;
+  color: var(--text);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.fuel-chart-empty {
+  display: grid;
+  gap: 0.35rem;
+  aspect-ratio: 1;
+  place-items: center;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 999px;
+  border: 14px solid var(--fuel-ring-track);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.fuel-chart-empty strong {
+  font-size: 1.6rem;
+  color: var(--text);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.fuel-chart-total {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 860px) {
+  .fuel-chart-layout {
+    grid-template-columns: 1fr;
+  }
+}

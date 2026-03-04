@@ -1,0 +1,138 @@
+.station-hero {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.3rem;
+}
+
+.station-hero-copy {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.station-card-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.station-card {
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.station-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.station-card-header h3 {
+  font-size: 1.25rem;
+}
+
+.station-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.station-card-stats div {
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.station-card-stats strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.station-hero-chart {
+  margin-top: 0.2rem;
+}
+
+.station-fuel-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.88fr);
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.station-fuel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.station-fuel-card,
+.station-stock-editor {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.station-fuel-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.station-inline-chart {
+  height: 100%;
+}
+
+.station-stock-editor {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.station-stock-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.station-stock-button {
+  width: fit-content;
+}
+
+.station-list-block {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.station-block-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.station-delete-button {
+  padding-inline: 1rem;
+}
+
+.station-inline-empty {
+  padding: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .station-card-header {
+    flex-direction: column;
+  }
+
+  .station-card-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .station-fuel-layout,
+  .station-fuel-grid,
+  .station-stock-fields {
+    grid-template-columns: 1fr;
+  }
+}

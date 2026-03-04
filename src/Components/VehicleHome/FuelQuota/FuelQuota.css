@@ -1,0 +1,23 @@
+.quota-hero {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.details-progress-panel,
+.qr-details-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.details-progress-ring {
+  width: min(220px, 100%);
+  margin: 0 auto;
+}
+
+.barcode-visual {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}

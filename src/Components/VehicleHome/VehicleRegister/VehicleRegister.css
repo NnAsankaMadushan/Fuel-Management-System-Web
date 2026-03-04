@@ -1,0 +1,28 @@
+.form-submit-button {
+  width: fit-content;
+}
+
+.registry-details-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.registry-details-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.registry-details-copy strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .form-submit-button {
+    width: 100%;
+  }
+}

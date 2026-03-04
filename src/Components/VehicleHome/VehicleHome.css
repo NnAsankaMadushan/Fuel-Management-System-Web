@@ -1,0 +1,140 @@
+.vehicle-hero {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.3rem;
+}
+
+.vehicle-hero-copy {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.vehicle-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.vehicle-card {
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.vehicle-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.vehicle-card-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.vehicle-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.vehicle-card-top h3 {
+  font-size: 1.25rem;
+}
+
+.vehicle-card-progress {
+  width: 92px;
+  min-width: 92px;
+}
+
+.vehicle-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.vehicle-card-stats div {
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.vehicle-card-stats strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.vehicle-details-link {
+  width: fit-content;
+}
+
+.vehicle-status-note {
+  font-size: 0.95rem;
+}
+
+.vehicle-status-note--pending {
+  color: var(--accent-strong);
+}
+
+.vehicle-status-note--rejected {
+  color: var(--danger);
+}
+
+.notification-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.notification-card {
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.notification-card--read {
+  opacity: 0.82;
+}
+
+.notification-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.notification-card-meta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.65rem;
+}
+
+.notification-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .vehicle-card-top {
+    flex-direction: column;
+  }
+
+  .vehicle-card-progress {
+    width: 88px;
+    min-width: 88px;
+  }
+
+  .vehicle-card-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-card-top {
+    flex-direction: column;
+  }
+}

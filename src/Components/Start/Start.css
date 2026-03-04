@@ -1,0 +1,125 @@
+.landing-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.landing-hero {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  gap: 1.5rem;
+  padding: 1.35rem;
+}
+
+.landing-copy {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+}
+
+.landing-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.landing-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-visual-card {
+  min-height: 100%;
+  padding: 1.35rem;
+  display: grid;
+  align-content: space-between;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.landing-logo-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.landing-logo-shell {
+  width: min(100%, 26rem);
+  aspect-ratio: 1;
+  padding: 0.6rem;
+  border-radius: 50%;
+  background: rgba(248, 244, 238, 1);
+}
+
+.landing-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.landing-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.8rem;
+}
+
+.landing-role-card {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.landing-role-card h3 {
+  font-size: 1rem;
+}
+
+.landing-role-card p {
+  margin-top: 0.35rem;
+}
+
+.landing-status {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem;
+  border-radius: 18px;
+  background: rgba(248, 244, 238, 1);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.landing-status h3 {
+  color: var(--text);
+}
+
+@media (max-width: 960px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-title {
+    font-size: clamp(2.2rem, 10vw, 3.5rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-shell {
+    min-height: auto;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .landing-hero {
+    padding: 1.15rem;
+  }
+}

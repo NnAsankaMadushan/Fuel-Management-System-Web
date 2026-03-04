@@ -1,0 +1,63 @@
+.admin-hero {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.3rem;
+}
+
+.admin-hero-copy {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-table-panel {
+  padding: 1.3rem;
+}
+
+.tab-container {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(24, 33, 47, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tab-button--active {
+  background: linear-gradient(135deg, var(--accent) 0%, #ff8a3d 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
+.admin-modal {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.registered-vehicle-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.admin-detail-actions {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .admin-modal-header {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,14 @@
+.operator-hero {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.3rem;
+}
+
+.operator-hero-copy {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.operator-fuel-chart {
+  margin-top: 0.2rem;
+}

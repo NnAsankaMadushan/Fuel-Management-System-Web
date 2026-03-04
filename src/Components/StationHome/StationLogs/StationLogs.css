@@ -1,0 +1,9 @@
+.logs-hero,
+.logs-table-panel {
+  padding: 1.5rem;
+}
+
+.logs-hero {
+  display: grid;
+  gap: 1.5rem;
+}
