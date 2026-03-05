@@ -1,19 +1,8 @@
 import { useEffect, useState } from 'react';
 import Header from '../Header/Header';
 import Footer from '../footer/footer';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-} from 'chart.js';
 import { updateVehicleApproval } from '../../api/api';
 import './AdminHome.css';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip);
 
 const getVehicleStatus = (vehicle) => vehicle?.verificationStatus || (vehicle?.isVerified ? 'approved' : 'pending');
 
@@ -187,38 +176,11 @@ export const AdminHome = () => {
 
   const currentData = activeTab === 'Vehicles' ? vehicles : stations;
   const totalOperators = stations.reduce((sum, station) => sum + (station.stationOperators?.length || 0), 0);
-
-  const chartData = {
-    labels: ['Fuel Stations', 'Vehicles'],
-    datasets: [
-      {
-        label: 'Registrations',
-        data: [stations.length, vehicles.length],
-        backgroundColor: ['rgba(13, 148, 136, 0.78)', 'rgba(249, 115, 22, 0.78)'],
-        borderRadius: 16,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          precision: 0,
-        },
-      },
-    },
-  };
+  const totalRegistrations = stations.length + vehicles.length;
+  const registrationRings = [
+    { key: 'stations', label: 'Fuel Stations', value: stations.length, className: 'admin-ring-card--stations' },
+    { key: 'vehicles', label: 'Vehicles', value: vehicles.length, className: 'admin-ring-card--vehicles' },
+  ];
 
   return (
     <div className="app-shell">
@@ -268,7 +230,22 @@ export const AdminHome = () => {
                 <h2>Registrations</h2>
               </div>
             </div>
-            <Bar data={chartData} options={chartOptions} />
+            <div className="admin-ring-grid">
+              {registrationRings.map((ring) => (
+                <div key={ring.key} className={`admin-ring-card ${ring.className}`}>
+                  <div className="admin-ring-meter" aria-label={`${ring.label}: ${ring.value}`}>
+                    <span className="admin-ring-value">{ring.value}</span>
+                  </div>
+                  <div className="admin-ring-copy">
+                    <span className="metric-label">{ring.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="admin-ring-total">
+              <span className="metric-label">Total registrations</span>
+              <strong>{totalRegistrations}</strong>
+            </div>
           </div>
         </section>
 

@@ -13,6 +13,70 @@
   padding: 1.3rem;
 }
 
+.admin-ring-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-ring-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.admin-ring-card--vehicles {
+  --admin-ring-value: var(--accent-strong);
+  --admin-ring-track: #e8ddd0;
+}
+
+.admin-ring-card--stations {
+  --admin-ring-value: var(--teal);
+  --admin-ring-track: #dde9e8;
+}
+
+.admin-ring-meter {
+  width: min(200px, 100%);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 14px solid var(--admin-ring-track);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-ring-value {
+  color: var(--admin-ring-value);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 500;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  line-height: 1;
+}
+
+.admin-ring-copy {
+  text-align: center;
+}
+
+.admin-ring-total {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.admin-ring-total strong {
+  font-size: 1.5rem;
+  color: var(--text);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
 .tab-container {
   display: flex;
   gap: 0.7rem;
@@ -57,6 +121,10 @@
 }
 
 @media (max-width: 640px) {
+  .admin-ring-grid {
+    grid-template-columns: 1fr;
+  }
+
   .admin-modal-header {
     flex-direction: column;
   }
