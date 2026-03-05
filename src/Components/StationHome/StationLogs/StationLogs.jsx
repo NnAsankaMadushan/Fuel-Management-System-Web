@@ -78,10 +78,10 @@ const StationLogs = () => {
                 <tbody>
                   {logs.map((log) => (
                     <tr key={log._id}>
-                      <td>{log.vehicleNumber}</td>
-                      <td>{new Date(log.date).toLocaleDateString()}</td>
-                      <td>{log.stationName}</td>
-                      <td>{log.litresPumped}L</td>
+                      <td data-label="Vehicle">{log.vehicleNumber}</td>
+                      <td data-label="Date">{new Date(log.date).toLocaleDateString()}</td>
+                      <td data-label="Fuel station">{log.stationName}</td>
+                      <td data-label="Liters">{log.litresPumped}L</td>
                     </tr>
                   ))}
                 </tbody>

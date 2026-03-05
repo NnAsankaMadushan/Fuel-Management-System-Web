@@ -52,7 +52,12 @@ body {
   min-height: 100vh;
   font-size: 17px;
   color: var(--text);
-  background: linear-gradient(180deg, #f8f4ee 0%, #fffdfa 52%, #f1f5f6 100%);
+  background:
+    radial-gradient(circle at 18% -12%, rgba(249, 115, 22, 0.18), transparent 36%),
+    radial-gradient(circle at 88% 0%, rgba(13, 148, 136, 0.15), transparent 32%),
+    linear-gradient(180deg, #f8f4ee 0%, #fffdfa 52%, #f1f5f6 100%);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 img {
@@ -74,6 +79,11 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(249, 115, 22, 0.35);
+  outline-offset: 2px;
 }
 
 h1,
@@ -532,6 +542,10 @@ p {
   vertical-align: top;
 }
 
+.app-table td::before {
+  content: none;
+}
+
 .table-actions {
   display: flex;
   flex-wrap: wrap;
@@ -584,6 +598,98 @@ p {
 
 .rise-in {
   animation: rise 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 760px) {
+  .table-shell {
+    overflow: visible;
+  }
+
+  .app-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .app-table thead {
+    display: none;
+  }
+
+  .app-table,
+  .app-table tbody,
+  .app-table tr,
+  .app-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .app-table tr {
+    margin-bottom: 0.85rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 18px;
+    border: 1px solid rgba(24, 33, 47, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .app-table td {
+    margin: 0;
+    padding: 0.72rem 0;
+    border-top: 1px dashed rgba(24, 33, 47, 0.1);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .app-table td:first-child {
+    border-top: none;
+  }
+
+  .app-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 46%;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .app-table td[data-label="Actions"] {
+    display: grid;
+    justify-content: stretch;
+    gap: 0.65rem;
+  }
+
+  .app-table td[data-label="Actions"]::before {
+    max-width: none;
+  }
+
+  .app-table td[data-label="Actions"] .table-actions {
+    width: 100%;
+  }
 }
 
 @media (max-width: 960px) {

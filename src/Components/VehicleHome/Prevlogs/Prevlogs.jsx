@@ -78,10 +78,10 @@ const Prevlogs = () => {
                 <tbody>
                   {logs.map((log) => (
                     <tr key={log._id}>
-                      <td>{log._id}</td>
-                      <td>{new Date(log.date).toLocaleDateString()}</td>
-                      <td>{log.stationName}</td>
-                      <td>{log.litresPumped}L</td>
+                      <td data-label="Transaction">{log._id}</td>
+                      <td data-label="Date">{new Date(log.date).toLocaleDateString()}</td>
+                      <td data-label="Fuel station">{log.stationName}</td>
+                      <td data-label="Amount">{log.litresPumped}L</td>
                     </tr>
                   ))}
                 </tbody>

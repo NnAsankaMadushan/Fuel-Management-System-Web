@@ -293,14 +293,18 @@ export const AdminHome = () => {
 
                     return (
                       <tr key={item._id}>
-                        <td>{activeTab === 'Vehicles' ? item.vehicleNumber || 'N/A' : item.stationName || 'N/A'}</td>
-                        <td>{activeTab === 'Vehicles' ? item.vehicleType || 'N/A' : item.location || 'N/A'}</td>
+                        <td data-label={activeTab === 'Vehicles' ? 'Vehicle Number' : 'Station Name'}>
+                          {activeTab === 'Vehicles' ? item.vehicleNumber || 'N/A' : item.stationName || 'N/A'}
+                        </td>
+                        <td data-label={activeTab === 'Vehicles' ? 'Vehicle Type' : 'Location'}>
+                          {activeTab === 'Vehicles' ? item.vehicleType || 'N/A' : item.location || 'N/A'}
+                        </td>
                         {activeTab === 'Vehicles' ? (
-                          <td>
+                          <td data-label="Status">
                             <span className={getStatusClassName(vehicleStatus)}>{formatVehicleStatus(vehicleStatus)}</span>
                           </td>
                         ) : null}
-                        <td>
+                        <td data-label="Actions">
                           <div className="table-actions">
                             <button type="button" className="secondary-button" onClick={() => showDetails(item._id)}>
                               Details
