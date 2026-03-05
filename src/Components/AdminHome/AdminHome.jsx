@@ -5,6 +5,11 @@ import { createStationOwnerByAdmin, updateVehicleApproval } from '../../api/api'
 import './AdminHome.css';
 
 const getVehicleStatus = (vehicle) => vehicle?.verificationStatus || (vehicle?.isVerified ? 'approved' : 'pending');
+const getRecordTime = (item) => {
+  const createdTime = new Date(item?.createdAt || item?.updatedAt || '').getTime();
+  return Number.isFinite(createdTime) ? createdTime : 0;
+};
+const sortNewestFirst = (items = []) => [...items].sort((a, b) => getRecordTime(b) - getRecordTime(a));
 
 const formatVehicleStatus = (status) => {
   const normalizedStatus = String(status || 'pending').toLowerCase();
@@ -92,7 +97,7 @@ export const AdminHome = () => {
       }
 
       const data = await response.json();
-      setVehicles(data);
+      setVehicles(sortNewestFirst(Array.isArray(data) ? data : []));
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       setBanner('Failed to load vehicle records.', true);
@@ -107,7 +112,7 @@ export const AdminHome = () => {
       });
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const data = await response.json();
-      setStations(data);
+      setStations(sortNewestFirst(Array.isArray(data) ? data : []));
     } catch (error) {
       console.error('Error fetching stations:', error);
       setBanner('Failed to load station records.', true);
