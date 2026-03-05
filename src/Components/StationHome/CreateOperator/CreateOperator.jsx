@@ -10,6 +10,7 @@ const CreateOperator = () => {
     email: '',
     password: '',
     phoneNumber: '',
+    nicNumber: '',
   });
   const [responseMessage, setResponseMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +87,18 @@ const CreateOperator = () => {
               <label className="field-group">
                 <span>Email address</span>
                 <input type="email" name="email" placeholder="operator@example.com" value={formData.email} onChange={handleChange} required />
+              </label>
+
+              <label className="field-group">
+                <span>NIC number</span>
+                <input
+                  type="text"
+                  name="nicNumber"
+                  placeholder="200012345678 or 123456789V"
+                  value={formData.nicNumber}
+                  onChange={handleChange}
+                  required
+                />
               </label>
 
               <label className="field-group">

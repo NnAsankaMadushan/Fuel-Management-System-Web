@@ -8,6 +8,15 @@ import FuelAvailabilityChart from '../FuelAvailabilityChart/FuelAvailabilityChar
 
 const operatorActions = [
   {
+    to: '/v-register',
+    mark: 'RG',
+    title: 'Register vehicle',
+    description: 'Register a vehicle linked to your operator account.',
+    accent: 'rgba(249, 115, 22, 0.28)',
+    soft: 'var(--accent-soft)',
+    text: 'var(--accent-strong)',
+  },
+  {
     to: '/s-fuel-quota',
     mark: 'FS',
     title: 'Fuel summary',

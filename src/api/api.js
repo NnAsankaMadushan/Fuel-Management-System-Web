@@ -13,13 +13,14 @@ const normalizeUser = (user) => {
     return null;
   }
 
-  const { _id, name, email, role, phoneNumber, stationNames, primaryStationName } = user;
+  const { _id, name, email, role, phoneNumber, nicNumber, stationNames, primaryStationName } = user;
   return {
     _id,
     name,
     email,
     role: normalizeUserRole(role),
     phoneNumber,
+    nicNumber,
     stationNames: Array.isArray(stationNames) ? stationNames.filter(Boolean) : [],
     primaryStationName: typeof primaryStationName === 'string' ? primaryStationName : '',
   };

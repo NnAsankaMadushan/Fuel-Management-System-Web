@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../Header/Header';
 import Footer from '../../footer/footer';
+import { getStoredSessionUser } from '../../../api/api';
 import './VehicleRegister.css';
 
 const formatVehicleNumberInput = (value) =>
@@ -77,7 +78,9 @@ const VehicleRegister = () => {
         });
         setResponseMessage(data.message || 'Vehicle registered successfully. Redirecting to your dashboard...');
         setTimeout(() => {
-          navigate('/vehicleHome');
+          const currentUser = getStoredSessionUser();
+          const destination = currentUser?.role === 'station_operator' ? '/o-home' : '/vehicleHome';
+          navigate(destination);
         }, 1200);
       } else {
         setIsError(true);

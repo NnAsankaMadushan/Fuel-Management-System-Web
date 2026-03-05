@@ -9,6 +9,7 @@ const SignUp = () => {
     email: '',
     password: '',
     phoneNumber: '',
+    nicNumber: '',
     role: 'vehicle_owner',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +35,7 @@ const SignUp = () => {
       setTimeout(() => navigate('/login'), 1200);
     } catch (error) {
       console.error('Signup failed:', error);
-      setMessage('Signup failed. Check the form values and try again.');
+      setMessage(error.response?.data?.message || 'Signup failed. Check the form values and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +70,18 @@ const SignUp = () => {
                 />
               </label>
             </div>
+
+            <label className="field-group">
+              <span>NIC number</span>
+              <input
+                type="text"
+                name="nicNumber"
+                placeholder="200012345678 or 123456789V"
+                value={formData.nicNumber}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
             <label className="field-group">
               <span>Email address</span>
