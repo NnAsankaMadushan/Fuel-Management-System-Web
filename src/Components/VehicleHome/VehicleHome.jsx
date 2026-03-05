@@ -5,7 +5,12 @@ import './VehicleHome.css';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { Link } from 'react-router-dom';
-import { getMyNotifications, getMyVehicles, markNotificationAsRead } from '../../api/api';
+import {
+  getMyNotifications,
+  getMyVehicles,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from '../../api/api';
 import {
   applyNotificationRead,
   emitNotificationRead,
@@ -49,7 +54,6 @@ const VehicleHome = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isNotificationLoading, setIsNotificationLoading] = useState(true);
-  const [notificationActionId, setNotificationActionId] = useState('');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -62,7 +66,46 @@ const VehicleHome = () => {
       }
 
       if (notificationResult.status === 'fulfilled') {
-        setNotifications(notificationResult.value);
+        const notificationList = notificationResult.value || [];
+        setNotifications(notificationList);
+
+        const unreadNotificationIds = notificationList
+          .filter((notification) => notification && !notification.isRead && notification._id)
+          .map((notification) => notification._id);
+
+        if (unreadNotificationIds.length) {
+          try {
+            await markAllNotificationsAsRead();
+          } catch (bulkReadError) {
+            const fallbackResults = await Promise.allSettled(
+              unreadNotificationIds.map((notificationId) => markNotificationAsRead(notificationId)),
+            );
+
+            const hasAtLeastOneSuccess = fallbackResults.some(
+              (result) => result.status === 'fulfilled',
+            );
+
+            if (!hasAtLeastOneSuccess) {
+              throw bulkReadError;
+            }
+          }
+
+          try {
+            const readIdSet = new Set(unreadNotificationIds);
+
+            setNotifications((current) =>
+              current.map((notification) =>
+                readIdSet.has(notification._id)
+                  ? { ...notification, isRead: true }
+                  : notification,
+              ),
+            );
+
+            unreadNotificationIds.forEach((notificationId) => emitNotificationRead(notificationId));
+          } catch (error) {
+            console.error('Error auto-marking notifications as read:', error);
+          }
+        }
       } else {
         console.error('Error fetching notifications:', notificationResult.reason);
       }
@@ -91,19 +134,6 @@ const VehicleHome = () => {
       window.removeEventListener(NOTIFICATION_READ_EVENT, syncReadStatus);
     };
   }, []);
-
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      setNotificationActionId(notificationId);
-      await markNotificationAsRead(notificationId);
-      setNotifications((current) => applyNotificationRead(current, notificationId));
-      emitNotificationRead(notificationId);
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    } finally {
-      setNotificationActionId('');
-    }
-  };
 
   const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
 
@@ -170,14 +200,14 @@ const VehicleHome = () => {
           <div className="section-heading">
             <div>
               <span className="section-badge">Notifications</span>
-              <h2>Approval updates</h2>
+              <h2>Recent updates</h2>
             </div>
           </div>
 
           {isNotificationLoading ? (
             <div className="empty-state">Loading notifications...</div>
           ) : notifications.length === 0 ? (
-            <div className="empty-state">No approval notifications yet.</div>
+            <div className="empty-state">No notifications yet.</div>
           ) : (
             <div className="notification-stack">
               {notifications.map((notification) => (
@@ -199,23 +229,13 @@ const VehicleHome = () => {
                     <span className="inline-note">{formatNotificationTime(notification.createdAt)}</span>
                   </div>
 
-                  <div className="notification-card-actions">
-                    {notification.vehicle?._id ? (
+                  {notification.vehicle?._id ? (
+                    <div className="notification-card-actions">
                       <Link to={`/vehicle/${notification.vehicle._id}`} className="secondary-button">
                         Open vehicle
                       </Link>
-                    ) : null}
-                    {!notification.isRead ? (
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        disabled={notificationActionId === notification._id}
-                        onClick={() => handleMarkAsRead(notification._id)}
-                      >
-                        {notificationActionId === notification._id ? 'Saving...' : 'Mark as read'}
-                      </button>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>

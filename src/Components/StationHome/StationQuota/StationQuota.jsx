@@ -84,14 +84,6 @@ const StationQuota = () => {
               <div className="metric-label">Dispensed</div>
               <div className="metric-value">{summary.totalLitresDispensed}L</div>
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Petrol Available</div>
-              <div className="metric-value">{summary.totalAvailablePetrol}L</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Diesel Available</div>
-              <div className="metric-value">{summary.totalAvailableDiesel}L</div>
-            </div>
           </div>
         </section>
 

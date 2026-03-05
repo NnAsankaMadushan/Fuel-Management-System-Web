@@ -3,6 +3,7 @@ import './App.css';
 import Start from './Components/Start/Start';
 import Login from './Components/Login/Login';
 import SignUp from './Components/SignUp/SignUp';
+import ChangePassword from './Components/ChangePassword/ChangePassword';
 import { AdminHome } from './Components/AdminHome/AdminHome';
 import VehicleHome from './Components/VehicleHome/VehicleHome';
 import VehicleRegister from './Components/VehicleHome/VehicleRegister/VehicleRegister';
@@ -24,6 +25,7 @@ function App() {
         <Route path="/" element={<Start />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/admin" element={<AdminHome />} />
         <Route path="/vehicleHome" element={<VehicleHome />} />
         <Route path="/v-register" element={<VehicleRegister />} />

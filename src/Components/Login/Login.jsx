@@ -18,6 +18,12 @@ const Login = () => {
 
     try {
       const user = await loginUser({ email, password });
+
+      if (user?.mustChangePassword) {
+        navigate('/change-password', { replace: true, state: { forcePasswordChange: true } });
+        return;
+      }
+
       const nextRoute = getRouteForRole(user?.role);
 
       if (nextRoute) navigate(nextRoute);

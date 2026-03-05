@@ -183,14 +183,6 @@ const StationHome = () => {
               <div className="metric-label">Operators</div>
               <div className="metric-value">{totalOperators}</div>
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Petrol Available</div>
-              <div className="metric-value">{totalAvailablePetrol}L</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Diesel Available</div>
-              <div className="metric-value">{totalAvailableDiesel}L</div>
-            </div>
           </div>
 
           <FuelAvailabilityChart
@@ -269,17 +261,6 @@ const StationHome = () => {
                   </div>
 
                   <div className="station-fuel-layout">
-                    <div className="station-fuel-grid">
-                      <div className="station-fuel-card">
-                        <span className="metric-label">Petrol available</span>
-                        <strong>{station.availablePetrol || 0}L</strong>
-                      </div>
-                      <div className="station-fuel-card">
-                        <span className="metric-label">Diesel available</span>
-                        <strong>{station.availableDiesel || 0}L</strong>
-                      </div>
-                    </div>
-
                     <FuelAvailabilityChart
                       petrol={station.availablePetrol || 0}
                       diesel={station.availableDiesel || 0}

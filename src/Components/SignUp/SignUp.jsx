@@ -10,7 +10,6 @@ const SignUp = () => {
     password: '',
     phoneNumber: '',
     nicNumber: '',
-    role: 'vehicle_owner',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -30,7 +29,7 @@ const SignUp = () => {
     setMessage('');
 
     try {
-      await signupUser(formData);
+      await signupUser({ ...formData, role: 'vehicle_owner' });
       setMessage('Account created successfully. Redirecting to login...');
       setTimeout(() => navigate('/login'), 1200);
     } catch (error) {
@@ -48,7 +47,7 @@ const SignUp = () => {
           <span className="auth-brand">FuelPlus</span>
           <div>
             <h1>Create account</h1>
-            <p className="auth-subtitle">Fill in the form and choose the correct role.</p>
+            <p className="auth-subtitle">Fill in the form to create your vehicle owner account.</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -91,14 +90,6 @@ const SignUp = () => {
             <label className="field-group">
               <span>Password</span>
               <input type="password" name="password" placeholder="Create a password" value={formData.password} onChange={handleChange} required />
-            </label>
-
-            <label className="field-group">
-              <span>Role</span>
-              <select name="role" value={formData.role} onChange={handleChange}>
-                <option value="vehicle_owner">Vehicle Owner</option>
-                <option value="station_owner">Station Owner</option>
-              </select>
             </label>
 
             <button className="button auth-submit" type="submit" disabled={isLoading}>

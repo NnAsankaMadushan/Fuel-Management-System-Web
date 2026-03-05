@@ -39,7 +39,7 @@ const CreateOperator = () => {
 
       const data = await response.json();
       if (response.ok) {
-        setResponseMessage('Operator added successfully. Redirecting to station home...');
+        setResponseMessage('Operator added successfully. They must change this temporary password on first login.');
         setTimeout(() => {
           navigate('/s-home');
         }, 1200);
@@ -102,8 +102,8 @@ const CreateOperator = () => {
               </label>
 
               <label className="field-group">
-                <span>Password</span>
-                <input type="password" name="password" placeholder="Create a password" value={formData.password} onChange={handleChange} required />
+                <span>Temporary password</span>
+                <input type="password" name="password" placeholder="Set an initial password" value={formData.password} onChange={handleChange} required />
               </label>
 
               <button type="submit" className="button form-submit-button" disabled={isLoading}>

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Header from '../Header/Header';
 import Footer from '../footer/footer';
-import { updateVehicleApproval } from '../../api/api';
+import { createStationOwnerByAdmin, updateVehicleApproval } from '../../api/api';
 import './AdminHome.css';
 
 const getVehicleStatus = (vehicle) => vehicle?.verificationStatus || (vehicle?.isVerified ? 'approved' : 'pending');
@@ -12,6 +12,13 @@ const formatVehicleStatus = (status) => {
 };
 
 const getStatusClassName = (status) => `status-chip status-chip--${String(status || 'pending').toLowerCase()}`;
+const initialStationOwnerForm = {
+  name: '',
+  email: '',
+  password: '',
+  phoneNumber: '',
+  nicNumber: '',
+};
 
 export const AdminHome = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -21,18 +28,59 @@ export const AdminHome = () => {
   const [isSubmittingDecision, setIsSubmittingDecision] = useState(false);
   const [responseMessage, setResponseMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [recordSearchTerm, setRecordSearchTerm] = useState('');
+  const [stationOwnerForm, setStationOwnerForm] = useState(initialStationOwnerForm);
+  const [isCreatingOwner, setIsCreatingOwner] = useState(false);
 
-  useEffect(() => {
-    fetchVehicles();
-    fetchStations();
-  }, []);
-
-  const setBanner = (message, error = false) => {
+  const setBanner = useCallback((message, error = false) => {
     setResponseMessage(message);
     setIsError(error);
+  }, []);
+
+  const handleStationOwnerFieldChange = (event) => {
+    const { name, value } = event.target;
+    setStationOwnerForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
-  const fetchVehicles = async () => {
+  const resetStationOwnerForm = () => {
+    setStationOwnerForm(initialStationOwnerForm);
+  };
+
+  const handleCreateStationOwner = async (event) => {
+    event.preventDefault();
+
+    const payload = {
+      name: stationOwnerForm.name.trim(),
+      email: stationOwnerForm.email.trim(),
+      password: stationOwnerForm.password,
+      phoneNumber: stationOwnerForm.phoneNumber.trim(),
+      nicNumber: stationOwnerForm.nicNumber.trim(),
+    };
+
+    if (Object.values(payload).some((value) => !value)) {
+      setBanner('All station owner fields are required.', true);
+      return;
+    }
+
+    setIsCreatingOwner(true);
+    setResponseMessage('');
+
+    try {
+      const data = await createStationOwnerByAdmin(payload);
+      setBanner(data.message || 'Station owner account created successfully.');
+      resetStationOwnerForm();
+    } catch (error) {
+      console.error('Error creating station owner:', error);
+      setBanner(error.response?.data?.message || 'Failed to create station owner account.', true);
+    } finally {
+      setIsCreatingOwner(false);
+    }
+  };
+
+  const fetchVehicles = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vehicles`, {
         method: 'GET',
@@ -49,9 +97,9 @@ export const AdminHome = () => {
       console.error('Error fetching vehicles:', error);
       setBanner('Failed to load vehicle records.', true);
     }
-  };
+  }, [setBanner]);
 
-  const fetchStations = async () => {
+  const fetchStations = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stations`, {
         method: 'GET',
@@ -64,7 +112,12 @@ export const AdminHome = () => {
       console.error('Error fetching stations:', error);
       setBanner('Failed to load station records.', true);
     }
-  };
+  }, [setBanner]);
+
+  useEffect(() => {
+    fetchVehicles();
+    fetchStations();
+  }, [fetchVehicles, fetchStations]);
 
   const showDetails = async (id) => {
     const url =
@@ -175,6 +228,34 @@ export const AdminHome = () => {
   };
 
   const currentData = activeTab === 'Vehicles' ? vehicles : stations;
+  const searchQuery = recordSearchTerm.trim().toLowerCase();
+  const filteredData = currentData.filter((item) => {
+    if (!searchQuery) {
+      return true;
+    }
+
+    if (activeTab === 'Vehicles') {
+      const searchableValues = [
+        item.vehicleNumber,
+        item.vehicleType,
+        item.fuelType,
+        item.vehicleOwnerName,
+        item.vehicleOwner?.name,
+        getVehicleStatus(item),
+      ];
+
+      return searchableValues.some((value) => String(value || '').toLowerCase().includes(searchQuery));
+    }
+
+    const searchableValues = [
+      item.stationName,
+      item.location,
+      item.station_regNumber,
+      item.fuelStationOwner?.name,
+    ];
+
+    return searchableValues.some((value) => String(value || '').toLowerCase().includes(searchQuery));
+  });
   const totalOperators = stations.reduce((sum, station) => sum + (station.stationOperators?.length || 0), 0);
   const totalRegistrations = stations.length + vehicles.length;
   const registrationRings = [
@@ -222,6 +303,85 @@ export const AdminHome = () => {
           </section>
         ) : null}
 
+        <section className="page-section panel admin-owner-panel">
+          <div className="section-heading">
+            <div>
+              <span className="section-badge">Accounts</span>
+              <h2>Create station owner</h2>
+            </div>
+          </div>
+
+          <form className="app-form admin-owner-form" onSubmit={handleCreateStationOwner}>
+            <div className="field-grid admin-owner-grid">
+              <label className="field-group">
+                <span>Full name</span>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Station owner name"
+                  value={stationOwnerForm.name}
+                  onChange={handleStationOwnerFieldChange}
+                  required
+                />
+              </label>
+
+              <label className="field-group">
+                <span>Email address</span>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="owner@example.com"
+                  value={stationOwnerForm.email}
+                  onChange={handleStationOwnerFieldChange}
+                  required
+                />
+              </label>
+
+              <label className="field-group">
+                <span>Phone number</span>
+                <input
+                  type="text"
+                  name="phoneNumber"
+                  placeholder="0771234567"
+                  value={stationOwnerForm.phoneNumber}
+                  onChange={handleStationOwnerFieldChange}
+                  required
+                />
+              </label>
+
+              <label className="field-group">
+                <span>NIC number</span>
+                <input
+                  type="text"
+                  name="nicNumber"
+                  placeholder="200012345678 or 123456789V"
+                  value={stationOwnerForm.nicNumber}
+                  onChange={handleStationOwnerFieldChange}
+                  required
+                />
+              </label>
+            </div>
+
+            <label className="field-group">
+              <span>Temporary password</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="Set an initial password"
+                value={stationOwnerForm.password}
+                onChange={handleStationOwnerFieldChange}
+                required
+              />
+            </label>
+
+            <div className="admin-owner-actions">
+              <button type="submit" className="button" disabled={isCreatingOwner}>
+                {isCreatingOwner ? 'Creating station owner...' : 'Create Station Owner'}
+              </button>
+            </div>
+          </form>
+        </section>
+
         <section className="page-section">
           <div className="chart-panel panel">
             <div className="section-heading">
@@ -256,26 +416,47 @@ export const AdminHome = () => {
               <h2>{activeTab}</h2>
             </div>
 
-            <div className="tab-container">
-              <button
-                type="button"
-                className={`tab-button ${activeTab === 'Vehicles' ? 'tab-button--active' : ''}`}
-                onClick={() => setActiveTab('Vehicles')}
-              >
-                Vehicles
-              </button>
-              <button
-                type="button"
-                className={`tab-button ${activeTab === 'Stations' ? 'tab-button--active' : ''}`}
-                onClick={() => setActiveTab('Stations')}
-              >
-                Stations
-              </button>
+            <div className="admin-record-controls">
+              <div className="tab-container">
+                <button
+                  type="button"
+                  className={`tab-button ${activeTab === 'Vehicles' ? 'tab-button--active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('Vehicles');
+                    setRecordSearchTerm('');
+                  }}
+                >
+                  Vehicles
+                </button>
+                <button
+                  type="button"
+                  className={`tab-button ${activeTab === 'Stations' ? 'tab-button--active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('Stations');
+                    setRecordSearchTerm('');
+                  }}
+                >
+                  Stations
+                </button>
+              </div>
+
+              <label className="admin-search-field">
+                <input
+                  type="text"
+                  value={recordSearchTerm}
+                  onChange={(event) => setRecordSearchTerm(event.target.value)}
+                  placeholder={
+                    activeTab === 'Vehicles'
+                      ? 'Search vehicle number, type, owner, status...'
+                      : 'Search station name, location, reg number...'
+                  }
+                />
+              </label>
             </div>
           </div>
 
           <div className="table-shell">
-            {currentData.length === 0 ? (
+            {filteredData.length === 0 ? (
               <div className="empty-state">No {activeTab.toLowerCase()} found.</div>
             ) : (
               <table className="app-table">
@@ -288,7 +469,7 @@ export const AdminHome = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentData.map((item) => {
+                  {filteredData.map((item) => {
                     const vehicleStatus = getVehicleStatus(item);
 
                     return (

@@ -1,5 +1,11 @@
 import axios from 'axios';
 import { normalizeUserRole } from '../utils/userRole';
+import {
+  addLocalNotification,
+  markAllLocalNotificationsAsRead,
+  markLocalNotificationAsRead,
+  readLocalNotifications,
+} from '../utils/localNotifications';
 
 const SESSION_USER_KEY = 'fuelplus_user';
 
@@ -13,7 +19,17 @@ const normalizeUser = (user) => {
     return null;
   }
 
-  const { _id, name, email, role, phoneNumber, nicNumber, stationNames, primaryStationName } = user;
+  const {
+    _id,
+    name,
+    email,
+    role,
+    phoneNumber,
+    nicNumber,
+    stationNames,
+    primaryStationName,
+    mustChangePassword,
+  } = user;
   return {
     _id,
     name,
@@ -21,6 +37,7 @@ const normalizeUser = (user) => {
     role: normalizeUserRole(role),
     phoneNumber,
     nicNumber,
+    mustChangePassword: Boolean(mustChangePassword),
     stationNames: Array.isArray(stationNames) ? stationNames.filter(Boolean) : [],
     primaryStationName: typeof primaryStationName === 'string' ? primaryStationName : '',
   };
@@ -86,6 +103,16 @@ export const signupUser = async (userData) => {
     }
   };
 
+export const createStationOwnerByAdmin = async (payload) => {
+  try {
+    const response = await api.post('/api/users/admin/station-owners', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Create station owner error:', error);
+    throw error;
+  }
+};
+
 export const getMyVehicles = async () => {
   try {
     const response = await api.get('/api/vehicles/mine');
@@ -119,6 +146,21 @@ export const getCurrentUser = async () => {
   }
 };
 
+export const changePassword = async (payload) => {
+  try {
+    const response = await api.put('/api/users/change-password', payload);
+    const updatedUser = response.data?.user ? storeSessionUser(response.data.user) : getStoredSessionUser();
+
+    return {
+      ...response.data,
+      ...(updatedUser ? { user: updatedUser } : {}),
+    };
+  } catch (error) {
+    console.error('Change password error:', error);
+    throw error;
+  }
+};
+
 export const getVehicleLogs = async () => {
   try {
     const response = await api.get('/api/fuel/vehicle-logs');
@@ -131,8 +173,8 @@ export const getVehicleLogs = async () => {
 
 export const getMyNotifications = async () => {
   try {
-    const response = await api.get('/api/notifications/mine');
-    return response.data;
+    const userId = getStoredSessionUser()?._id;
+    return readLocalNotifications(userId);
   } catch (error) {
     console.error('Get notifications error:', error);
     throw error;
@@ -141,10 +183,49 @@ export const getMyNotifications = async () => {
 
 export const markNotificationAsRead = async (notificationId) => {
   try {
-    const response = await api.patch(`/api/notifications/${notificationId}/read`);
-    return response.data;
+    const userId = getStoredSessionUser()?._id;
+    const { updated } = markLocalNotificationAsRead(userId, notificationId);
+
+    return {
+      message: updated ? 'Notification marked as read' : 'Notification already read',
+      notification: {
+        _id: notificationId,
+        isRead: true,
+      },
+    };
   } catch (error) {
     console.error('Mark notification as read error:', error);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async () => {
+  try {
+    const userId = getStoredSessionUser()?._id;
+    const { modifiedCount } = markAllLocalNotificationsAsRead(userId);
+
+    return {
+      message: 'Notifications marked as read',
+      modifiedCount,
+    };
+  } catch (error) {
+    console.error('Mark all notifications as read error:', error);
+    throw error;
+  }
+};
+
+export const createLocalNotification = async (notification, options = {}) => {
+  try {
+    const userId = options.userId || getStoredSessionUser()?._id;
+
+    if (!userId) {
+      return null;
+    }
+
+    const nextNotifications = addLocalNotification(userId, notification);
+    return nextNotifications[0] || null;
+  } catch (error) {
+    console.error('Create local notification error:', error);
     throw error;
   }
 };

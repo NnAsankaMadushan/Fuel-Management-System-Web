@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@chakra-ui/react';
 import Header from '../../Header/Header';
 import Footer from '../../footer/footer';
-import { getStationSummary, registerFuelTransaction } from '../../../api/api';
+import { createLocalNotification, getStationSummary, registerFuelTransaction } from '../../../api/api';
 import './QRScan.css';
 
 const initialSummary = {
@@ -39,6 +40,7 @@ const extractVehicleNumber = (value) => {
 };
 
 const QRScan = () => {
+  const toast = useToast();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const frameRef = useRef(null);
@@ -266,9 +268,34 @@ const QRScan = () => {
 
       await loadSummary();
 
+      const successMessage = `${response.litresPumped}L of ${response.fuelType} recorded for ${response.vehicleNumber}. Available ${response.fuelType} stock was reduced automatically.`;
+
+      await createLocalNotification({
+        type: 'fuel_transaction',
+        title: 'Fuel transaction recorded',
+        message: `${response.litresPumped}L of ${response.fuelType} was recorded for ${response.vehicleNumber} at ${response.stationName}.`,
+        status: 'completed',
+        vehicle: response.vehicle
+          ? {
+              _id: response.vehicle,
+              vehicleNumber: response.vehicleNumber,
+            }
+          : null,
+      });
+
       setFeedback({
         type: 'success',
-        message: `${response.litresPumped}L of ${response.fuelType} recorded for ${response.vehicleNumber}. Available ${response.fuelType} stock was reduced automatically.`,
+        message: successMessage,
+      });
+      toast({
+        id: `transaction-${response._id || Date.now()}`,
+        title: 'Transaction saved',
+        description: successMessage,
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+        position: 'top-right',
+        variant: 'subtle',
       });
 
       resetScan({ keepFeedback: true });

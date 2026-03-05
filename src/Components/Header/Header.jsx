@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '@chakra-ui/react';
 import brandIcon from '/src/assets/Images/Logo.png';
 import './Header.css';
 import {
@@ -7,6 +8,7 @@ import {
   getMyNotifications,
   getStoredSessionUser,
   logoutUser,
+  markAllNotificationsAsRead,
   markNotificationAsRead,
 } from '../../api/api';
 import {
@@ -14,6 +16,10 @@ import {
   emitNotificationRead,
   NOTIFICATION_READ_EVENT,
 } from '../../utils/notifications';
+import {
+  requestBrowserNotificationPermission,
+  sendBrowserNotification,
+} from '../../utils/browserNotifications';
 
 const getSectionLabel = (pathname) => {
   if (pathname === '/') return 'Home';
@@ -56,6 +62,12 @@ const formatNotificationTime = (value) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   });
+
+const NOTIFICATION_ENABLED_ROLES = new Set([
+  'vehicle_owner',
+  'station_owner',
+  'station_operator',
+]);
 
 const BellIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -235,17 +247,20 @@ const isMobileNavItemActive = (pathname, matches) =>
   matches.some((value) => pathname === value || pathname.startsWith(`${value}/`));
 
 function Header() {
+  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const sectionLabel = getSectionLabel(location.pathname);
   const [currentUser, setCurrentUser] = useState(() => getStoredSessionUser());
   const [notifications, setNotifications] = useState([]);
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
-  const [notificationActionId, setNotificationActionId] = useState('');
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const shownPopupIdsRef = useRef(new Set());
+  const isBulkReadInFlightRef = useRef(false);
   const stationPreview = formatStationPreview(currentUser);
-  const shouldShowNotifications = currentUser?.role === 'vehicle_owner';
+  const shouldShowNotifications = NOTIFICATION_ENABLED_ROLES.has(currentUser?.role);
+  const canOpenVehicleFromNotification = currentUser?.role === 'vehicle_owner';
   const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
   const mobileNavItems = getMobileNavItems(currentUser?.role);
 
@@ -273,6 +288,12 @@ function Header() {
   }, []);
 
   useEffect(() => {
+    if (currentUser?.mustChangePassword && location.pathname !== '/change-password') {
+      navigate('/change-password', { replace: true, state: { forcePasswordChange: true } });
+    }
+  }, [currentUser?.mustChangePassword, location.pathname, navigate]);
+
+  useEffect(() => {
     if (!currentUser || !shouldShowNotifications) {
       setNotifications([]);
       setIsNotificationLoading(false);
@@ -282,9 +303,12 @@ function Header() {
 
     let ignore = false;
 
-    const loadNotifications = async () => {
+    const loadNotifications = async ({ silent = false } = {}) => {
       try {
-        setIsNotificationLoading(true);
+        if (!silent) {
+          setIsNotificationLoading(true);
+        }
+
         const notificationList = await getMyNotifications();
 
         if (!ignore) {
@@ -300,7 +324,7 @@ function Header() {
           }
         }
       } finally {
-        if (!ignore) {
+        if (!ignore && !silent) {
           setIsNotificationLoading(false);
         }
       }
@@ -308,10 +332,159 @@ function Header() {
 
     loadNotifications();
 
+    const intervalId = window.setInterval(() => {
+      loadNotifications({ silent: true });
+    }, 30000);
+
     return () => {
       ignore = true;
+      window.clearInterval(intervalId);
     };
   }, [currentUser, location.pathname, shouldShowNotifications]);
+
+  useEffect(() => {
+    if (!shouldShowNotifications) {
+      return;
+    }
+
+    requestBrowserNotificationPermission();
+  }, [shouldShowNotifications]);
+
+  useEffect(() => {
+    shownPopupIdsRef.current = new Set();
+  }, [currentUser?._id]);
+
+  const markNotificationsAsRead = useCallback(async (notificationIds) => {
+    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+      return;
+    }
+
+    const targetIds = notificationIds.filter(Boolean);
+    if (!targetIds.length) {
+      return;
+    }
+
+    try {
+      await markAllNotificationsAsRead();
+    } catch (bulkReadError) {
+      const fallbackResults = await Promise.allSettled(
+        targetIds.map((notificationId) => markNotificationAsRead(notificationId)),
+      );
+
+      const successfulFallback = targetIds.filter(
+        (notificationId, index) =>
+          notificationId &&
+          fallbackResults[index]?.status === 'fulfilled',
+      );
+
+      if (!successfulFallback.length) {
+        throw bulkReadError;
+      }
+    }
+
+    const readIds = new Set(targetIds);
+    setNotifications((current) =>
+      current.map((notification) =>
+        readIds.has(notification._id) ? { ...notification, isRead: true } : notification,
+      ),
+    );
+
+    targetIds.forEach((notificationId) => emitNotificationRead(notificationId));
+  }, []);
+
+  useEffect(() => {
+    if (!shouldShowNotifications || !notifications.length) {
+      return;
+    }
+
+    const nextUnread = notifications.find(
+      (notification) =>
+        notification &&
+        !notification.isRead &&
+        notification._id &&
+        !shownPopupIdsRef.current.has(notification._id),
+    );
+
+    if (!nextUnread?._id) {
+      return;
+    }
+
+    shownPopupIdsRef.current.add(nextUnread._id);
+
+    const popupTitle = nextUnread.title || 'Notification';
+    const popupMessage = nextUnread.message || '';
+
+    toast({
+      id: `notification-${nextUnread._id}`,
+      duration: 6500,
+      position: 'top-right',
+      containerStyle: {
+        width: '100%',
+        maxWidth: 'min(680px, calc(100vw - 16px))',
+      },
+      render: ({ onClose }) => (
+        <div className="header-toast" role="status" aria-live="polite">
+          <span className="header-toast-icon" aria-hidden="true">
+            <BellIcon />
+          </span>
+          <div className="header-toast-copy">
+            <strong>{popupTitle}</strong>
+            {popupMessage ? <p>{popupMessage}</p> : null}
+          </div>
+          <button
+            type="button"
+            className="header-toast-close"
+            onClick={onClose}
+            aria-label="Dismiss notification"
+          >
+            x
+          </button>
+        </div>
+      ),
+    });
+
+    if (typeof document !== 'undefined' && document.hidden) {
+      sendBrowserNotification({
+        title: nextUnread.title || 'FuelPlus',
+        message: nextUnread.message || '',
+        tag: `fuelplus-${nextUnread._id}`,
+      });
+    }
+
+  }, [notifications, shouldShowNotifications, toast]);
+
+  useEffect(() => {
+    if (!shouldShowNotifications || !isNotificationModalOpen || !notifications.length) {
+      return;
+    }
+
+    if (isBulkReadInFlightRef.current) {
+      return;
+    }
+
+    const unreadNotificationIds = notifications
+      .filter((notification) => notification && !notification.isRead && notification._id)
+      .map((notification) => notification._id);
+
+    if (!unreadNotificationIds.length) {
+      return;
+    }
+
+    isBulkReadInFlightRef.current = true;
+
+    markNotificationsAsRead(unreadNotificationIds)
+      .catch((error) => {
+        console.error('Error auto-marking modal notifications as read:', error);
+      })
+      .finally(() => {
+        isBulkReadInFlightRef.current = false;
+      });
+  }, [
+    isNotificationModalOpen,
+    markNotificationsAsRead,
+    notifications,
+    shouldShowNotifications,
+  ]);
 
   useEffect(() => {
     const syncReadStatus = (event) => {
@@ -371,6 +544,7 @@ function Header() {
   };
 
   const handleNotificationModalToggle = () => {
+    requestBrowserNotificationPermission();
     setIsNotificationModalOpen((current) => !current);
   };
 
@@ -380,19 +554,6 @@ function Header() {
 
   const handleMenuToggle = () => {
     setIsMobileMenuOpen((current) => !current);
-  };
-
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      setNotificationActionId(notificationId);
-      await markNotificationAsRead(notificationId);
-      setNotifications((current) => applyNotificationRead(current, notificationId));
-      emitNotificationRead(notificationId);
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    } finally {
-      setNotificationActionId('');
-    }
   };
 
   const handleOpenVehicle = (vehicleId) => {
@@ -460,6 +621,12 @@ function Header() {
                 </div>
               </div>
 
+              {currentUser ? (
+                <Link to="/change-password" className="secondary-button logout-button">
+                  Change Password
+                </Link>
+              ) : null}
+
               <button onClick={handleLogout} className="secondary-button logout-button" type="button">
                 Logout
               </button>
@@ -500,7 +667,7 @@ function Header() {
             <div className="header-notification-modal-top">
               <div className="header-notification-copy">
                 <span className="section-badge">Notifications</span>
-                <h2 id="header-notifications-title">Approval updates</h2>
+                <h2 id="header-notifications-title">Recent alerts</h2>
                 <p>
                   {unreadNotifications > 0
                     ? `${unreadNotifications} unread update${unreadNotifications === 1 ? '' : 's'}`
@@ -519,7 +686,7 @@ function Header() {
             {isNotificationLoading ? (
               <div className="empty-state">Loading notifications...</div>
             ) : notifications.length === 0 ? (
-              <div className="empty-state">No approval notifications yet.</div>
+              <div className="empty-state">No notifications yet.</div>
             ) : (
               <div className="header-notification-list">
                 {notifications.map((notification) => (
@@ -544,8 +711,8 @@ function Header() {
                       <span className="inline-note">{formatNotificationTime(notification.createdAt)}</span>
                     </div>
 
-                    <div className="header-notification-actions">
-                      {notification.vehicle?._id ? (
+                    {canOpenVehicleFromNotification && notification.vehicle?._id ? (
+                      <div className="header-notification-actions">
                         <button
                           type="button"
                           className="secondary-button"
@@ -553,18 +720,8 @@ function Header() {
                         >
                           Open vehicle
                         </button>
-                      ) : null}
-                      {!notification.isRead ? (
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          disabled={notificationActionId === notification._id}
-                          onClick={() => handleMarkAsRead(notification._id)}
-                        >
-                          {notificationActionId === notification._id ? 'Saving...' : 'Mark as read'}
-                        </button>
-                      ) : null}
-                    </div>
+                      </div>
+                    ) : null}
                   </article>
                 ))}
               </div>

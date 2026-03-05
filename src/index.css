@@ -207,6 +207,11 @@ p {
   color: var(--danger);
 }
 
+.status-chip--completed {
+  background: rgba(29, 139, 95, 0.12);
+  color: var(--success);
+}
+
 .tag {
   padding: 0.4rem 0.7rem;
   background: rgba(24, 33, 47, 0.06);

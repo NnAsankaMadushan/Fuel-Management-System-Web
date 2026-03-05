@@ -102,14 +102,6 @@ const Operator = () => {
               <div className="metric-label">Dispensed</div>
               <div className="metric-value">{isLoading ? '...' : `${summary.totalLitresDispensed}L`}</div>
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Petrol Available</div>
-              <div className="metric-value">{isLoading ? '...' : `${summary.totalAvailablePetrol}L`}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Diesel Available</div>
-              <div className="metric-value">{isLoading ? '...' : `${summary.totalAvailableDiesel}L`}</div>
-            </div>
           </div>
 
           <FuelAvailabilityChart
