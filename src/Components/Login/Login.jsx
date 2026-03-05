@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../Auth/Auth.css';
 import { loginUser } from '../../api/api';
 import { getRouteForRole } from '../../utils/userRole';
@@ -10,6 +10,13 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (typeof location.state?.email === 'string' && location.state.email.trim()) {
+      setEmail(location.state.email.trim());
+    }
+  }, [location.state?.email]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -30,7 +37,19 @@ const Login = () => {
       else setMessage('The logged-in role is not recognized by the current frontend.');
     } catch (error) {
       console.error('Login failed:', error);
-      setMessage('Login failed. Please check your credentials and try again.');
+      if (error?.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        navigate('/verify-email', {
+          replace: true,
+          state: {
+            email,
+            verificationContext: 'existing',
+            serverMessage: error?.response?.data?.message || 'Email verification is required before login.',
+          },
+        });
+        return;
+      }
+
+      setMessage(error?.response?.data?.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }

@@ -29,6 +29,7 @@ const normalizeUser = (user) => {
     stationNames,
     primaryStationName,
     mustChangePassword,
+    emailVerified,
   } = user;
   return {
     _id,
@@ -38,6 +39,7 @@ const normalizeUser = (user) => {
     phoneNumber,
     nicNumber,
     mustChangePassword: Boolean(mustChangePassword),
+    emailVerified: emailVerified !== false,
     stationNames: Array.isArray(stationNames) ? stationNames.filter(Boolean) : [],
     primaryStationName: typeof primaryStationName === 'string' ? primaryStationName : '',
   };
@@ -102,6 +104,46 @@ export const signupUser = async (userData) => {
       throw error;
     }
   };
+
+export const resendSignupOtp = async (email) => {
+  try {
+    const response = await api.post('/api/users/signup/resend-otp', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Resend signup OTP error:', error);
+    throw error;
+  }
+};
+
+export const confirmSignupUser = async (email, otp) => {
+  try {
+    const response = await api.post('/api/users/signup/confirm', { email, otp });
+    return response.data;
+  } catch (error) {
+    console.error('Confirm signup OTP error:', error);
+    throw error;
+  }
+};
+
+export const requestEmailVerificationOtp = async (email) => {
+  try {
+    const response = await api.post('/api/users/email-verification/request-otp', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Request email OTP error:', error);
+    throw error;
+  }
+};
+
+export const verifyEmailVerificationOtp = async (email, otp) => {
+  try {
+    const response = await api.post('/api/users/email-verification/verify-otp', { email, otp });
+    return response.data;
+  } catch (error) {
+    console.error('Verify email OTP error:', error);
+    throw error;
+  }
+};
 
 export const createStationOwnerByAdmin = async (payload) => {
   try {

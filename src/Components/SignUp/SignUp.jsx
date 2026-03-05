@@ -29,9 +29,16 @@ const SignUp = () => {
     setMessage('');
 
     try {
-      await signupUser({ ...formData, role: 'vehicle_owner' });
-      setMessage('Account created successfully. Redirecting to login...');
-      setTimeout(() => navigate('/login'), 1200);
+      const response = await signupUser({ ...formData, role: 'vehicle_owner' });
+      navigate('/verify-email', {
+        replace: true,
+        state: {
+          email: formData.email,
+          verificationContext: 'signup',
+          signupMessage: response?.message || 'OTP sent. Verify to complete account creation.',
+          debugOtp: response?.debugOtp,
+        },
+      });
     } catch (error) {
       console.error('Signup failed:', error);
       setMessage(error.response?.data?.message || 'Signup failed. Check the form values and try again.');
