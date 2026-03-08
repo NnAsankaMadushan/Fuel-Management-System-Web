@@ -165,6 +165,46 @@ export const getMyVehicles = async () => {
   }
 };
 
+export const getAllVehicles = async () => {
+  try {
+    const response = await api.get('/api/vehicles');
+    return response.data;
+  } catch (error) {
+    console.error('Get all vehicles error:', error);
+    throw error;
+  }
+};
+
+export const getVehicleById = async (vehicleId) => {
+  try {
+    const response = await api.get(`/api/vehicles/${encodeURIComponent(vehicleId)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get vehicle by id error:', error);
+    throw error;
+  }
+};
+
+export const registerVehicle = async (payload) => {
+  try {
+    const response = await api.post('/api/vehicles/register', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Register vehicle error:', error);
+    throw error;
+  }
+};
+
+export const deleteVehicle = async (vehicleId) => {
+  try {
+    const response = await api.delete(`/api/vehicles/${encodeURIComponent(vehicleId)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete vehicle error:', error);
+    throw error;
+  }
+};
+
 export const updateVehicleApproval = async (vehicleId, payload) => {
   try {
     const response = await api.patch(`/api/vehicles/${vehicleId}/approval`, payload);
@@ -182,8 +222,61 @@ export const getCurrentUser = async () => {
   } catch (error) {
     if (error?.response?.status === 401) {
       clearStoredSessionUser();
+      throw error;
     }
     console.error('Get current user error:', error);
+    throw error;
+  }
+};
+
+export const getWebPushConfig = async () => {
+  try {
+    const response = await api.get('/api/users/web-push/config');
+    return {
+      enabled: Boolean(response?.data?.enabled),
+      vapidPublicKey: typeof response?.data?.vapidPublicKey === 'string'
+        ? response.data.vapidPublicKey
+        : null,
+    };
+  } catch (error) {
+    console.error('Get web push config error:', error);
+    return {
+      enabled: false,
+      vapidPublicKey: null,
+    };
+  }
+};
+
+export const registerWebPushSubscription = async (subscription) => {
+  try {
+    const response = await api.post('/api/users/web-push/subscription', {
+      subscription,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Register web push subscription error:', error);
+    throw error;
+  }
+};
+
+export const unregisterWebPushSubscription = async (subscription) => {
+  const endpoint = String(subscription?.endpoint || '').trim();
+
+  if (!endpoint) {
+    return {
+      message: 'No subscription endpoint to remove',
+      removedCount: 0,
+      subscriptionCount: 0,
+    };
+  }
+
+  try {
+    const response = await api.delete('/api/users/web-push/subscription', {
+      data: { endpoint },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Unregister web push subscription error:', error);
     throw error;
   }
 };
@@ -214,45 +307,79 @@ export const getVehicleLogs = async () => {
 };
 
 export const getMyNotifications = async () => {
+  const userId = getStoredSessionUser()?._id;
+  const localNotifications = readLocalNotifications(userId);
+
   try {
-    const userId = getStoredSessionUser()?._id;
-    return readLocalNotifications(userId);
+    const response = await api.get('/api/notifications/mine');
+    const remoteNotifications = Array.isArray(response.data) ? response.data : [];
+    const remoteIds = new Set(
+      remoteNotifications
+        .map((notification) => String(notification?._id || '').trim())
+        .filter(Boolean),
+    );
+    const localOnlyNotifications = localNotifications.filter((notification) => {
+      const notificationId = String(notification?._id || '').trim();
+      return notificationId.startsWith('local-') || !remoteIds.has(notificationId);
+    });
+
+    return [...remoteNotifications, ...localOnlyNotifications].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    );
   } catch (error) {
     console.error('Get notifications error:', error);
-    throw error;
+    return localNotifications;
   }
 };
 
 export const markNotificationAsRead = async (notificationId) => {
-  try {
-    const userId = getStoredSessionUser()?._id;
-    const { updated } = markLocalNotificationAsRead(userId, notificationId);
+  const normalizedNotificationId = String(notificationId || '').trim();
+  const userId = getStoredSessionUser()?._id;
+
+  if (normalizedNotificationId.startsWith('local-')) {
+    const { updated } = markLocalNotificationAsRead(userId, normalizedNotificationId);
 
     return {
       message: updated ? 'Notification marked as read' : 'Notification already read',
       notification: {
-        _id: notificationId,
+        _id: normalizedNotificationId,
         isRead: true,
       },
     };
+  }
+
+  try {
+    const response = await api.patch(`/api/notifications/${encodeURIComponent(normalizedNotificationId)}/read`);
+    return response.data;
   } catch (error) {
     console.error('Mark notification as read error:', error);
-    throw error;
+    const { updated } = markLocalNotificationAsRead(userId, normalizedNotificationId);
+    return {
+      message: updated ? 'Notification marked as read locally' : 'Notification already read',
+      notification: {
+        _id: normalizedNotificationId,
+        isRead: true,
+      },
+    };
   }
 };
 
 export const markAllNotificationsAsRead = async () => {
-  try {
-    const userId = getStoredSessionUser()?._id;
-    const { modifiedCount } = markAllLocalNotificationsAsRead(userId);
+  const userId = getStoredSessionUser()?._id;
+  const localResult = markAllLocalNotificationsAsRead(userId);
 
+  try {
+    const response = await api.patch('/api/notifications/mine/read');
     return {
-      message: 'Notifications marked as read',
-      modifiedCount,
+      ...response.data,
+      localModifiedCount: localResult.modifiedCount,
     };
   } catch (error) {
     console.error('Mark all notifications as read error:', error);
-    throw error;
+    return {
+      message: 'Notifications marked as read locally',
+      modifiedCount: localResult.modifiedCount,
+    };
   }
 };
 
@@ -312,12 +439,82 @@ export const getMyStations = async () => {
   }
 };
 
+export const getAllStations = async () => {
+  try {
+    const response = await api.get('/api/stations');
+    return response.data;
+  } catch (error) {
+    console.error('Get all stations error:', error);
+    throw error;
+  }
+};
+
+export const getStationById = async (stationId) => {
+  try {
+    const response = await api.get(`/api/stations/${encodeURIComponent(stationId)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get station by id error:', error);
+    throw error;
+  }
+};
+
+export const registerStation = async (payload) => {
+  try {
+    const response = await api.post('/api/stations/registerStation', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Register station error:', error);
+    throw error;
+  }
+};
+
 export const updateStation = async (stationRegNumber, payload) => {
   try {
     const response = await api.put(`/api/stations/update/${encodeURIComponent(stationRegNumber)}`, payload);
     return response.data;
   } catch (error) {
     console.error('Update station error:', error);
+    throw error;
+  }
+};
+
+export const updateStationApproval = async (stationId, payload) => {
+  try {
+    const response = await api.patch(`/api/stations/${encodeURIComponent(stationId)}/approval`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Update station approval error:', error);
+    throw error;
+  }
+};
+
+export const deleteStation = async (stationId) => {
+  try {
+    const response = await api.delete(`/api/stations/deleteStation/${encodeURIComponent(stationId)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete station error:', error);
+    throw error;
+  }
+};
+
+export const createStationOperator = async (payload) => {
+  try {
+    const response = await api.post('/api/stations/addStationOperator', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Create station operator error:', error);
+    throw error;
+  }
+};
+
+export const deleteStationOperator = async (operatorId) => {
+  try {
+    const response = await api.delete(`/api/stations/deleteStationOperator/${encodeURIComponent(operatorId)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete station operator error:', error);
     throw error;
   }
 };

@@ -36,11 +36,90 @@ export const AdminHome = () => {
   const [recordSearchTerm, setRecordSearchTerm] = useState('');
   const [stationOwnerForm, setStationOwnerForm] = useState(initialStationOwnerForm);
   const [isCreatingOwner, setIsCreatingOwner] = useState(false);
+  const [alertDialog, setAlertDialog] = useState({
+    isOpen: false,
+    mode: 'confirm',
+    title: '',
+    message: '',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    variant: 'default',
+    placeholder: '',
+    resolver: null,
+  });
+  const [promptValue, setPromptValue] = useState('');
 
   const setBanner = useCallback((message, error = false) => {
     setResponseMessage(message);
     setIsError(error);
   }, []);
+
+  const closeAlertDialog = useCallback((result) => {
+    setAlertDialog((current) => {
+      const resolver = current.resolver;
+
+      if (typeof resolver === 'function') {
+        resolver(result);
+      }
+
+      return {
+        isOpen: false,
+        mode: 'confirm',
+        title: '',
+        message: '',
+        confirmLabel: 'Confirm',
+        cancelLabel: 'Cancel',
+        variant: 'default',
+        placeholder: '',
+        resolver: null,
+      };
+    });
+  }, []);
+
+  const openConfirmDialog = useCallback(
+    ({ title = 'Confirm action', message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', variant = 'default' }) =>
+      new Promise((resolve) => {
+        setAlertDialog({
+          isOpen: true,
+          mode: 'confirm',
+          title,
+          message,
+          confirmLabel,
+          cancelLabel,
+          variant,
+          placeholder: '',
+          resolver: resolve,
+        });
+      }),
+    [],
+  );
+
+  const openPromptDialog = useCallback(
+    ({
+      title = 'Input required',
+      message,
+      placeholder = '',
+      defaultValue = '',
+      confirmLabel = 'Confirm',
+      cancelLabel = 'Cancel',
+      variant = 'default',
+    }) =>
+      new Promise((resolve) => {
+        setPromptValue(defaultValue);
+        setAlertDialog({
+          isOpen: true,
+          mode: 'prompt',
+          title,
+          message,
+          confirmLabel,
+          cancelLabel,
+          variant,
+          placeholder,
+          resolver: resolve,
+        });
+      }),
+    [],
+  );
 
   const handleStationOwnerFieldChange = (event) => {
     const { name, value } = event.target;
@@ -156,22 +235,35 @@ export const AdminHome = () => {
         ? `Approve vehicle ${vehicle.vehicleNumber}?`
         : `Reject vehicle ${vehicle.vehicleNumber}?`;
 
-    if (!window.confirm(confirmationMessage)) {
+    const isConfirmed = await openConfirmDialog({
+      title: status === 'approved' ? 'Approve vehicle' : 'Reject vehicle',
+      message: confirmationMessage,
+      confirmLabel: status === 'approved' ? 'Approve' : 'Reject',
+      cancelLabel: 'Cancel',
+      variant: status === 'approved' ? 'default' : 'danger',
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
     let note = '';
     if (status === 'rejected') {
-      const promptValue = window.prompt(
-        'Enter a rejection reason for the vehicle owner (optional):',
-        vehicle.approvalNote || ''
-      );
+      const enteredNote = await openPromptDialog({
+        title: 'Rejection reason',
+        message: 'Enter a rejection reason for the vehicle owner (optional).',
+        placeholder: 'Reason (optional)',
+        defaultValue: vehicle.approvalNote || '',
+        confirmLabel: 'Continue',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+      });
 
-      if (promptValue === null) {
+      if (enteredNote === null) {
         return;
       }
 
-      note = promptValue.trim();
+      note = String(enteredNote || '').trim();
     }
 
     setIsSubmittingDecision(true);
@@ -200,7 +292,15 @@ export const AdminHome = () => {
         ? `${import.meta.env.VITE_API_URL}/api/vehicles/${id}`
         : `${import.meta.env.VITE_API_URL}/api/stations/${id}`;
 
-    if (!window.confirm('Are you sure you want to delete this item?')) {
+    const isConfirmed = await openConfirmDialog({
+      title: 'Delete record',
+      message: 'Are you sure you want to delete this item?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
@@ -637,6 +737,67 @@ export const AdminHome = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        ) : null}
+
+        {alertDialog.isOpen ? (
+          <div
+            className="modal"
+            role="presentation"
+            onClick={() => closeAlertDialog(alertDialog.mode === 'prompt' ? null : false)}
+          >
+            <div
+              className="modal-content admin-alert-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-alert-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="admin-modal-header">
+                <div>
+                  <span className="section-badge">
+                    {alertDialog.variant === 'danger' ? 'Warning' : 'Action'}
+                  </span>
+                  <h2 id="admin-alert-title">{alertDialog.title}</h2>
+                </div>
+              </div>
+
+              {alertDialog.message ? (
+                <p className="admin-alert-message">{alertDialog.message}</p>
+              ) : null}
+
+              {alertDialog.mode === 'prompt' ? (
+                <label className="field-group admin-alert-field">
+                  <span>Reason</span>
+                  <input
+                    type="text"
+                    value={promptValue}
+                    onChange={(event) => setPromptValue(event.target.value)}
+                    placeholder={alertDialog.placeholder}
+                    autoFocus
+                  />
+                </label>
+              ) : null}
+
+              <div className="table-actions admin-alert-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => closeAlertDialog(alertDialog.mode === 'prompt' ? null : false)}
+                >
+                  {alertDialog.cancelLabel}
+                </button>
+                <button
+                  type="button"
+                  className={alertDialog.variant === 'danger' ? 'danger-button' : 'button'}
+                  onClick={() =>
+                    closeAlertDialog(alertDialog.mode === 'prompt' ? promptValue : true)
+                  }
+                >
+                  {alertDialog.confirmLabel}
+                </button>
+              </div>
             </div>
           </div>
         ) : null}

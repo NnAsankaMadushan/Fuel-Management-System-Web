@@ -85,41 +85,6 @@
   color: var(--danger);
 }
 
-.notification-stack {
-  display: grid;
-  gap: 1rem;
-}
-
-.notification-card {
-  padding: 1.2rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.notification-card--read {
-  opacity: 0.82;
-}
-
-.notification-card-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.notification-card-meta {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.65rem;
-}
-
-.notification-card-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
 @media (max-width: 640px) {
   .vehicle-card-top {
     flex-direction: column;
@@ -132,9 +97,5 @@
 
   .vehicle-card-stats {
     grid-template-columns: 1fr;
-  }
-
-  .notification-card-top {
-    flex-direction: column;
   }
 }

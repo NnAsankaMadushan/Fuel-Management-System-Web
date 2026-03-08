@@ -6,6 +6,13 @@ const USER_ROLE_ALIASES = {
   operator: 'station_operator',
 };
 
+export const ROLE_LABELS = {
+  admin: 'Admin',
+  vehicle_owner: 'Vehicle Owner',
+  station_owner: 'Station Owner',
+  station_operator: 'Station Operator',
+};
+
 export const normalizeUserRole = (role) => {
   if (typeof role !== 'string') {
     return role;
@@ -35,3 +42,5 @@ export const getRouteForRole = (role) => {
       return null;
   }
 };
+
+export const formatUserRole = (role) => ROLE_LABELS[normalizeUserRole(role)] || 'User';

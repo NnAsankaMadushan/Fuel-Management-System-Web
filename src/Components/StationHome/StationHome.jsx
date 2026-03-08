@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Header from '../Header/Header';
 import Footer from '../footer/footer';
 import './StationHome.css';
@@ -22,6 +22,8 @@ const stationActions = [
     accent: 'rgba(13, 148, 136, 0.26)',
     soft: 'var(--teal-soft)',
     text: 'var(--teal)',
+    requiresStation: true,
+    disabledReason: 'Register a station first to create operator accounts.',
   },
   {
     to: '/scan-qr',
@@ -49,7 +51,7 @@ const StationHome = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const applyStations = (stationList) => {
+  const applyStations = useCallback((stationList) => {
     setStations(stationList);
     setStockDrafts(
       Object.fromEntries(
@@ -62,9 +64,9 @@ const StationHome = () => {
         ]),
       ),
     );
-  };
+  }, []);
 
-  const loadStations = async () => {
+  const loadStations = useCallback(async () => {
     try {
       const data = await getMyStations();
       applyStations(data);
@@ -74,11 +76,11 @@ const StationHome = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [applyStations]);
 
   useEffect(() => {
     loadStations();
-  }, []);
+  }, [loadStations]);
 
   const handleDeleteOperator = async (operatorId) => {
     try {
@@ -161,6 +163,7 @@ const StationHome = () => {
   const totalOperators = stations.reduce((sum, station) => sum + (station.stationOperators?.length || 0), 0);
   const totalAvailablePetrol = stations.reduce((sum, station) => sum + (station.availablePetrol || 0), 0);
   const totalAvailableDiesel = stations.reduce((sum, station) => sum + (station.availableDiesel || 0), 0);
+  const hasRegisteredStation = stations.length > 0;
 
   return (
     <div className="app-shell">
@@ -205,24 +208,52 @@ const StationHome = () => {
           </div>
 
           <div className="action-grid">
-            {stationActions.map((action) => (
-              <Link
-                key={action.title}
-                to={action.to}
-                className="action-card"
-                style={{
-                  '--tile-accent': action.accent,
-                  '--tile-soft': action.soft,
-                  '--tile-text': action.text,
-                }}
-              >
-                <div className="action-card-top">
-                  <h3>{action.title}</h3>
-                  <span className="action-card-mark">{action.mark}</span>
-                </div>
-              </Link>
-            ))}
+            {stationActions.map((action) => {
+              const isDisabled = Boolean(action.requiresStation) && !hasRegisteredStation;
+
+              if (isDisabled) {
+                return (
+                  <div
+                    key={action.title}
+                    className="action-card action-card-disabled"
+                    style={{
+                      '--tile-accent': action.accent,
+                      '--tile-soft': action.soft,
+                      '--tile-text': action.text,
+                    }}
+                    title={action.disabledReason}
+                    aria-disabled="true"
+                  >
+                    <div className="action-card-top">
+                      <h3>{action.title}</h3>
+                      <span className="action-card-mark">{action.mark}</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={action.title}
+                  to={action.to}
+                  className="action-card"
+                  style={{
+                    '--tile-accent': action.accent,
+                    '--tile-soft': action.soft,
+                    '--tile-text': action.text,
+                  }}
+                >
+                  <div className="action-card-top">
+                    <h3>{action.title}</h3>
+                    <span className="action-card-mark">{action.mark}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
+          {!isLoading && !hasRegisteredStation ? (
+            <p className="muted-text station-action-note">Register a station first to enable operator creation.</p>
+          ) : null}
         </section>
 
         <section className="page-section">

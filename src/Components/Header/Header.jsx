@@ -7,9 +7,12 @@ import {
   getCurrentUser,
   getMyNotifications,
   getStoredSessionUser,
+  getWebPushConfig,
   logoutUser,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  registerWebPushSubscription,
+  unregisterWebPushSubscription,
 } from '../../api/api';
 import {
   applyNotificationRead,
@@ -20,6 +23,11 @@ import {
   requestBrowserNotificationPermission,
   sendBrowserNotification,
 } from '../../utils/browserNotifications';
+import {
+  ensureWebPushSubscription,
+  getCurrentWebPushSubscription,
+} from '../../utils/webPushNotifications';
+import { getRouteForRole } from '../../utils/userRole';
 
 const getSectionLabel = (pathname) => {
   if (pathname === '/') return 'Home';
@@ -263,6 +271,7 @@ function Header() {
   const canOpenVehicleFromNotification = currentUser?.role === 'vehicle_owner';
   const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
   const mobileNavItems = getMobileNavItems(currentUser?.role);
+  const homeRoute = getRouteForRole(currentUser?.role) || '/';
 
   useEffect(() => {
     let ignore = false;
@@ -349,6 +358,46 @@ function Header() {
 
     requestBrowserNotificationPermission();
   }, [shouldShowNotifications]);
+
+  useEffect(() => {
+    if (!currentUser?._id || !shouldShowNotifications) {
+      return;
+    }
+
+    let ignore = false;
+
+    const syncWebPush = async () => {
+      try {
+        const webPushConfig = await getWebPushConfig();
+
+        if (
+          !webPushConfig?.enabled ||
+          !webPushConfig?.vapidPublicKey ||
+          ignore
+        ) {
+          return;
+        }
+
+        const subscription = await ensureWebPushSubscription({
+          vapidPublicKey: webPushConfig.vapidPublicKey,
+        });
+
+        if (!subscription || ignore) {
+          return;
+        }
+
+        await registerWebPushSubscription(subscription.toJSON());
+      } catch (error) {
+        console.error('Web push subscription sync failed:', error);
+      }
+    };
+
+    syncWebPush();
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?._id, shouldShowNotifications]);
 
   useEffect(() => {
     shownPopupIdsRef.current = new Set();
@@ -533,6 +582,22 @@ function Header() {
 
   const handleLogout = async () => {
     try {
+      const existingSubscription = await getCurrentWebPushSubscription();
+
+      if (existingSubscription) {
+        try {
+          await unregisterWebPushSubscription(existingSubscription.toJSON());
+        } catch (error) {
+          console.error('Web push endpoint unregister failed:', error);
+        }
+
+        try {
+          await existingSubscription.unsubscribe();
+        } catch (error) {
+          console.error('Web push local unsubscribe failed:', error);
+        }
+      }
+
       await logoutUser();
       setCurrentUser(null);
       setNotifications([]);
@@ -565,7 +630,7 @@ function Header() {
     <>
       <header className="header-container">
         <nav className="navbar">
-          <Link to="/" className="navbar-brand">
+          <Link to={homeRoute} className="navbar-brand">
             <span className="navbar-brand-mark">
               <img src={brandIcon} alt="FuelPlus logo" />
             </span>

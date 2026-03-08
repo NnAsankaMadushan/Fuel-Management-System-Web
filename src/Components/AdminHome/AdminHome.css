@@ -149,6 +149,26 @@
   gap: 1rem;
 }
 
+.admin-alert-modal {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-alert-message {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-alert-field {
+  margin-top: 0.2rem;
+}
+
+.admin-alert-actions {
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
 .admin-modal-header {
   display: flex;
   justify-content: space-between;

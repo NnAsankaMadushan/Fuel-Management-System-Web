@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '@chakra-ui/react';
 import '../Auth/Auth.css';
 import {
   confirmSignupUser,
@@ -11,6 +12,7 @@ import {
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   const initialEmail = useMemo(() => {
     const value = location.state?.email;
     return typeof value === 'string' ? value : '';
@@ -35,26 +37,51 @@ const VerifyEmail = () => {
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [message, setMessage] = useState(initialMessage);
-  const [hasError, setHasError] = useState(false);
+
+  const showFeedbackToast = useCallback(
+    ({ title, description, status = 'info' }) => {
+      const toastId = 'verify-email-feedback';
+
+      if (toast.isActive(toastId)) {
+        toast.close(toastId);
+      }
+
+      toast({
+        id: toastId,
+        title,
+        description,
+        status,
+        duration: status === 'success' ? 2200 : 3200,
+        isClosable: true,
+        position: 'top-right',
+      });
+    },
+    [toast],
+  );
 
   useEffect(() => {
     setEmail(initialEmail);
   }, [initialEmail]);
 
   useEffect(() => {
-    setMessage(initialMessage);
-    setHasError(false);
-  }, [initialMessage]);
+    if (initialMessage) {
+      showFeedbackToast({
+        title: verificationContext === 'signup' ? 'Verify your email' : 'Email verification required',
+        description: initialMessage,
+        status: 'info',
+      });
+    }
+  }, [initialMessage, showFeedbackToast, verificationContext]);
 
   const handleVerify = async (event) => {
     event.preventDefault();
-    setHasError(false);
-    setMessage('');
 
     if (!email || !otp) {
-      setHasError(true);
-      setMessage('Email and OTP are required.');
+      showFeedbackToast({
+        title: 'Missing details',
+        description: 'Email and OTP are required.',
+        status: 'error',
+      });
       return;
     }
 
@@ -63,8 +90,11 @@ const VerifyEmail = () => {
       const response = verificationContext === 'signup'
         ? await confirmSignupUser(email, otp)
         : await verifyEmailVerificationOtp(email, otp);
-      setHasError(false);
-      setMessage(response?.message || 'Verification completed. Redirecting to login...');
+      showFeedbackToast({
+        title: 'Verification successful',
+        description: response?.message || 'Verification completed. Redirecting to login...',
+        status: 'success',
+      });
       setTimeout(() => {
         navigate('/login', {
           replace: true,
@@ -73,20 +103,23 @@ const VerifyEmail = () => {
       }, 1200);
     } catch (error) {
       console.error('Email verification failed:', error);
-      setHasError(true);
-      setMessage(error?.response?.data?.message || 'Email verification failed.');
+      showFeedbackToast({
+        title: 'Verification failed',
+        description: error?.response?.data?.message || 'Email verification failed.',
+        status: 'error',
+      });
     } finally {
       setIsVerifying(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setHasError(false);
-    setMessage('');
-
     if (!email) {
-      setHasError(true);
-      setMessage('Enter your email to request a new OTP.');
+      showFeedbackToast({
+        title: 'Email required',
+        description: 'Enter your email to request a new OTP.',
+        status: 'error',
+      });
       return;
     }
 
@@ -95,12 +128,18 @@ const VerifyEmail = () => {
       const response = verificationContext === 'signup'
         ? await resendSignupOtp(email)
         : await requestEmailVerificationOtp(email);
-      setHasError(false);
-      setMessage(response?.message || 'A new OTP has been sent.');
+      showFeedbackToast({
+        title: 'OTP sent',
+        description: response?.message || 'A new OTP has been sent.',
+        status: 'success',
+      });
     } catch (error) {
       console.error('Resend OTP failed:', error);
-      setHasError(true);
-      setMessage(error?.response?.data?.message || 'Failed to request a new OTP.');
+      showFeedbackToast({
+        title: 'Request failed',
+        description: error?.response?.data?.message || 'Failed to request a new OTP.',
+        status: 'error',
+      });
     } finally {
       setIsResending(false);
     }
@@ -160,10 +199,6 @@ const VerifyEmail = () => {
               Sign in
             </Link>
           </div>
-
-          {message ? (
-            <p className={`response-banner ${hasError ? 'error-banner' : ''}`}>{message}</p>
-          ) : null}
         </div>
       </section>
     </main>

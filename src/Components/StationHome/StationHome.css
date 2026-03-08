@@ -107,6 +107,19 @@
   padding: 1.1rem;
 }
 
+.action-card-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.action-card-disabled:hover {
+  transform: none;
+}
+
+.station-action-note {
+  margin-top: 0.8rem;
+}
+
 @media (max-width: 640px) {
   .station-card-header {
     flex-direction: column;

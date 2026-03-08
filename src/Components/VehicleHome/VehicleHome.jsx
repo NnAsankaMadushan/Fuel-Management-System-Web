@@ -5,17 +5,7 @@ import './VehicleHome.css';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { Link } from 'react-router-dom';
-import {
-  getMyNotifications,
-  getMyVehicles,
-  markAllNotificationsAsRead,
-  markNotificationAsRead,
-} from '../../api/api';
-import {
-  applyNotificationRead,
-  emitNotificationRead,
-  NOTIFICATION_READ_EVENT,
-} from '../../utils/notifications';
+import { getMyVehicles } from '../../api/api';
 
 const quickActions = [
   {
@@ -43,99 +33,26 @@ const formatStatus = (status) => {
   return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 };
 
-const formatNotificationTime = (value) =>
-  new Date(value).toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-
 const VehicleHome = () => {
   const [vehicles, setVehicles] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isNotificationLoading, setIsNotificationLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const [vehicleResult, notificationResult] = await Promise.allSettled([getMyVehicles(), getMyNotifications()]);
-
-      if (vehicleResult.status === 'fulfilled') {
-        setVehicles(vehicleResult.value);
-      } else {
-        console.error('Error fetching vehicle data:', vehicleResult.reason);
+      try {
+        const vehicleList = await getMyVehicles();
+        setVehicles(Array.isArray(vehicleList) ? vehicleList : []);
+      } catch (error) {
+        console.error('Error fetching vehicle data:', error);
+      } finally {
+        setIsLoading(false);
       }
-
-      if (notificationResult.status === 'fulfilled') {
-        const notificationList = notificationResult.value || [];
-        setNotifications(notificationList);
-
-        const unreadNotificationIds = notificationList
-          .filter((notification) => notification && !notification.isRead && notification._id)
-          .map((notification) => notification._id);
-
-        if (unreadNotificationIds.length) {
-          try {
-            await markAllNotificationsAsRead();
-          } catch (bulkReadError) {
-            const fallbackResults = await Promise.allSettled(
-              unreadNotificationIds.map((notificationId) => markNotificationAsRead(notificationId)),
-            );
-
-            const hasAtLeastOneSuccess = fallbackResults.some(
-              (result) => result.status === 'fulfilled',
-            );
-
-            if (!hasAtLeastOneSuccess) {
-              throw bulkReadError;
-            }
-          }
-
-          try {
-            const readIdSet = new Set(unreadNotificationIds);
-
-            setNotifications((current) =>
-              current.map((notification) =>
-                readIdSet.has(notification._id)
-                  ? { ...notification, isRead: true }
-                  : notification,
-              ),
-            );
-
-            unreadNotificationIds.forEach((notificationId) => emitNotificationRead(notificationId));
-          } catch (error) {
-            console.error('Error auto-marking notifications as read:', error);
-          }
-        }
-      } else {
-        console.error('Error fetching notifications:', notificationResult.reason);
-      }
-
-      setIsLoading(false);
-      setIsNotificationLoading(false);
     };
 
     fetchDashboardData();
   }, []);
 
-  useEffect(() => {
-    const syncReadStatus = (event) => {
-      const notificationId = event?.detail?.notificationId;
-
-      if (!notificationId) {
-        return;
-      }
-
-      setNotifications((current) => applyNotificationRead(current, notificationId));
-    };
-
-    window.addEventListener(NOTIFICATION_READ_EVENT, syncReadStatus);
-
-    return () => {
-      window.removeEventListener(NOTIFICATION_READ_EVENT, syncReadStatus);
-    };
-  }, []);
-
-  const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
+  const approvedVehicles = vehicles.filter((vehicle) => getVehicleStatus(vehicle) === 'approved').length;
 
   return (
     <div className="app-shell">
@@ -161,8 +78,8 @@ const VehicleHome = () => {
               </div>
             </div>
             <div className="metric-card">
-              <div className="metric-label">Unread notifications</div>
-              <div className="metric-value">{unreadNotifications}</div>
+              <div className="metric-label">Approved vehicles</div>
+              <div className="metric-value">{approvedVehicles}</div>
             </div>
           </div>
         </section>
@@ -194,52 +111,6 @@ const VehicleHome = () => {
               </Link>
             ))}
           </div>
-        </section>
-
-        <section className="page-section">
-          <div className="section-heading">
-            <div>
-              <span className="section-badge">Notifications</span>
-              <h2>Recent updates</h2>
-            </div>
-          </div>
-
-          {isNotificationLoading ? (
-            <div className="empty-state">Loading notifications...</div>
-          ) : notifications.length === 0 ? (
-            <div className="empty-state">No notifications yet.</div>
-          ) : (
-            <div className="notification-stack">
-              {notifications.map((notification) => (
-                <article
-                  key={notification._id}
-                  className={`notification-card section-card ${notification.isRead ? 'notification-card--read' : ''}`}
-                >
-                  <div className="notification-card-top">
-                    <div>
-                      <div className="notification-card-meta">
-                        <span className={`status-chip status-chip--${notification.status}`}>
-                          {formatStatus(notification.status)}
-                        </span>
-                        {!notification.isRead ? <span className="tag">New</span> : null}
-                      </div>
-                      <h3>{notification.title}</h3>
-                      <p>{notification.message}</p>
-                    </div>
-                    <span className="inline-note">{formatNotificationTime(notification.createdAt)}</span>
-                  </div>
-
-                  {notification.vehicle?._id ? (
-                    <div className="notification-card-actions">
-                      <Link to={`/vehicle/${notification.vehicle._id}`} className="secondary-button">
-                        Open vehicle
-                      </Link>
-                    </div>
-                  ) : null}
-                </article>
-              ))}
-            </div>
-          )}
         </section>
 
         <section className="page-section">

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './CreateOperator.css';
 import Header from '../../Header/Header';
 import Footer from '../../footer/footer';
 import { useNavigate } from 'react-router-dom';
+import { getMyStations } from '../../../api/api';
 
 const CreateOperator = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +15,24 @@ const CreateOperator = () => {
   });
   const [responseMessage, setResponseMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStations, setIsCheckingStations] = useState(true);
+  const [hasRegisteredStation, setHasRegisteredStation] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadStations = async () => {
+      try {
+        const stationList = await getMyStations();
+        setHasRegisteredStation(Array.isArray(stationList) && stationList.length > 0);
+      } catch {
+        setHasRegisteredStation(false);
+      } finally {
+        setIsCheckingStations(false);
+      }
+    };
+
+    loadStations();
+  }, []);
 
   const handleChange = (event) => {
     setFormData((current) => ({
@@ -25,6 +43,12 @@ const CreateOperator = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!hasRegisteredStation) {
+      setResponseMessage('Error: Register a station first to create an operator.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -106,10 +130,18 @@ const CreateOperator = () => {
                 <input type="password" name="password" placeholder="Set an initial password" value={formData.password} onChange={handleChange} required />
               </label>
 
-              <button type="submit" className="button form-submit-button" disabled={isLoading}>
+              <button
+                type="submit"
+                className="button form-submit-button"
+                disabled={isLoading || isCheckingStations || !hasRegisteredStation}
+              >
                 {isLoading ? 'Registering...' : 'Create Operator'}
               </button>
             </form>
+
+            {!isCheckingStations && !hasRegisteredStation ? (
+              <p className="response-banner error-banner">Register a station first to create an operator.</p>
+            ) : null}
 
             {responseMessage ? (
               <p className={`response-banner ${responseMessage.includes('Error') ? 'error-banner' : ''}`}>
